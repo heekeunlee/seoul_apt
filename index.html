@@ -12,8 +12,13 @@
 
 <!-- 헤더 -->
 <header>
-  <div>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
     <h1>🏙️ 서울 아파트 실거래가 <span>25억 이하 · 84㎡ 이상</span></h1>
+    <button id="info-btn" onclick="document.getElementById('info-modal').classList.add('open')"
+      style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;
+             border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;">
+      ℹ️ 분석 기준 &amp; 방법론
+    </button>
   </div>
   <div class="header-meta">
     <span id="sample-badge" class="sample-badge" style="display:none;">샘플 데이터</span>
@@ -158,7 +163,58 @@
 
 </div>
 
-<!-- 모달 -->
+<!-- 분석 기준 모달 -->
+<div class="modal-overlay" id="info-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>📊 분석 기준 &amp; 방법론</h3>
+      <button class="modal-close" onclick="document.getElementById('info-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" style="font-size:13px;line-height:1.8;">
+
+      <h4 style="color:#1a73e8;margin-bottom:6px;">📌 데이터 출처</h4>
+      <p>국토교통부 <strong>아파트 매매 실거래가 상세 자료</strong> API (공공데이터포털)<br>
+      실제 거래가 신고된 계약 건만 포함되며, 추정·호가 데이터는 제외됩니다.</p>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+
+      <h4 style="color:#1a73e8;margin-bottom:6px;">🔍 필터 기준</h4>
+      <ul style="padding-left:16px;">
+        <li><strong>지역:</strong> 서울시 25개 구 전체</li>
+        <li><strong>거래금액:</strong> 25억 원 이하 (예산 상한선)</li>
+        <li><strong>전용면적:</strong> 84㎡ 이상 (4인 가족 최소 기준, 약 30평대)</li>
+        <li><strong>기간:</strong> 최근 12개월 실거래 데이터</li>
+      </ul>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+
+      <h4 style="color:#1a73e8;margin-bottom:6px;">🏞️ 한강 인근 기준</h4>
+      <p>마포구·용산구·영등포구·성동구·광진구·동작구·강동구·강남구·서초구·송파구<br>
+      한강 접근성과 조망권이 상대적으로 우수한 구를 분류한 것으로, 실제 단지별 조망 여부와는 다를 수 있습니다.</p>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+
+      <h4 style="color:#1a73e8;margin-bottom:6px;">📈 통계 계산 방식</h4>
+      <ul style="padding-left:16px;">
+        <li><strong>평균 거래가:</strong> 필터 조건 내 전체 거래의 산술 평균</li>
+        <li><strong>거래량 추이:</strong> 월별 신고 건수 집계</li>
+        <li><strong>면적대 분포:</strong> 84~95 / 95~115 / 115~135 / 135㎡ 이상으로 구분</li>
+      </ul>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+
+      <h4 style="color:#1a73e8;margin-bottom:6px;">🔄 업데이트 주기</h4>
+      <p>GitHub Actions를 통해 <strong>매일 오전 9시(KST)</strong> 자동 갱신됩니다.<br>
+      국토부 데이터는 거래 신고 후 30일 이내 등록 의무가 있어 최신 거래는 1~4주 지연될 수 있습니다.</p>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid #eee;">
+
+      <p style="color:#999;font-size:11px;">⚠️ 본 대시보드는 개인 투자 참고용이며 실제 매수 결정 전 중개사 및 전문가 확인을 권장합니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 단지 상세 모달 -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-header">
