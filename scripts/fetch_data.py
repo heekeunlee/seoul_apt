@@ -109,6 +109,10 @@ def fetch_transactions(lawd_cd, deal_ymd):
             month = get("dealMonth").zfill(2)
             day   = get("dealDay").zfill(2)
 
+            # aptSeq 예: "11110-2445" → 네이버 단지코드 "2445"
+            apt_seq = get("aptSeq")
+            naver_complex_id = apt_seq.split("-")[-1] if "-" in apt_seq else ""
+
             items.append({
                 "단지명": get("aptNm"),
                 "구": "",  # 상위에서 채움
@@ -121,6 +125,7 @@ def fetch_transactions(lawd_cd, deal_ymd):
                 "년": year,
                 "월": month,
                 "일": day,
+                "단지코드": naver_complex_id,
                 "거래일": f"{year}-{month}-{day}",
                 "지역코드": lawd_cd,
             })
