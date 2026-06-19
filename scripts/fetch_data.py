@@ -93,11 +93,10 @@ def _get_land_complex_no(apt_name, gu_name):
                 "Referer": "https://new.land.naver.com/",
                 "Accept": "application/json, text/plain, */*",
             },
-            timeout=10,
+            timeout=3,  # 빠르게 포기
         )
         if resp.status_code == 200:
             data = resp.json()
-            # 여러 가능한 응답 구조 대응
             complexes = (
                 data.get("complexList")
                 or data.get("result", {}).get("complex", [])
@@ -107,10 +106,8 @@ def _get_land_complex_no(apt_name, gu_name):
             for c in complexes:
                 cn = str(c.get("complexNo") or c.get("hscpNo") or "")
                 name = c.get("complexName") or c.get("hscpNm") or ""
-                # 이름 앞 4자 일치 시 해당 단지로 판정
                 if cn.isdigit() and apt_name[:4] in name:
                     return cn
-        time.sleep(0.05)
     except Exception:
         pass
     return ""
@@ -147,8 +144,11 @@ SEOUL_DISTRICTS = {
 # 한강 인근 지역
 HANGANG_DISTRICTS = {"마포구", "용산구", "영등포구", "성동구", "광진구", "동작구", "강동구", "강남구", "서초구", "송파구"}
 
-MAX_PRICE = 250000  # 25억 (만원 단위)
+MAX_PRICE = 200000  # 20억 (만원 단위)
 MIN_AREA = 84.0     # 84㎡
+
+# 아파트 외 주거형태 제외 키워드 (오피스텔, 주상복합 등)
+EXCLUDE_KEYWORDS = ["오피스텔", "오피 스텔", "주상복합", "생활숙박", "레지던스", "도시형"]
 
 
 def get_yearmonths(months=12):
@@ -203,6 +203,9 @@ def fetch_transactions(lawd_cd, deal_ymd):
                 continue
             if area < MIN_AREA:
                 continue
+            apt_nm = get("aptNm")
+            if any(kw in apt_nm for kw in EXCLUDE_KEYWORDS):
+                continue
 
             year  = get("dealYear")
             month = get("dealMonth").zfill(2)
@@ -212,7 +215,7 @@ def fetch_transactions(lawd_cd, deal_ymd):
             jibun = get("jibun").lstrip("0") or ""
 
             items.append({
-                "단지명": get("aptNm"),
+                "단지명": apt_nm,
                 "구": "",  # 상위에서 채움
                 "법정동": get("umdNm"),
                 "지번": jibun,
@@ -261,10 +264,11 @@ def main():
             unique_keys[k] = None
 
     total = len(unique_keys)
+    print(f"  총 {total}개 단지 조회 시작...", flush=True)
     for i, (apt_name, gu_name) in enumerate(unique_keys.keys(), 1):
         unique_keys[(apt_name, gu_name)] = get_naver_info(apt_name, gu_name)
-        if i % 200 == 0 or i == total:
-            print(f"  {i}/{total} 처리...")
+        if i % 50 == 0 or i == total:
+            print(f"  {i}/{total} 처리중...", flush=True)
 
     for t in all_transactions:
         info = unique_keys.get((t["단지명"], t["구"]), {})
