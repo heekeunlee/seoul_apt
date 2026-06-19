@@ -538,9 +538,8 @@ function openModal(t){
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   let naverUrl;
   if(isMobile){
-    // 모바일: new.land.naver.com → m.land.naver.com 리다이렉트 시 /complexes/{id} 경로 404남
-    // m.land.naver.com/search/result 만 안정적으로 작동
-    naverUrl=`https://m.land.naver.com/search/result?query=${encodeURIComponent(t.단지명+' '+t.구)}`;
+    // 모바일: search.naver.com → 네이버 통합검색 (N-pay 부동산 카드 상단 표시, 404 없음)
+    naverUrl=`https://search.naver.com/search.naver?query=${encodeURIComponent(t.단지명+' '+t.구+' 아파트 실거래가')}`;
   } else if(t.네이버단지번호){
     naverUrl=`https://new.land.naver.com/complexes/${t.네이버단지번호}?a=APT:ABYG:JGC:PRE&e=SELL`;
   } else if(t.네이버좌표){
