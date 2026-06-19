@@ -2,6 +2,9 @@
 # 서울 아파트 대시보드 배포 스크립트
 # 사용법: sh deploy.sh
 cd "$(dirname "$0")"
+# git 락 파일 자동 정리
+rm -f .git/HEAD.lock .git/index.lock .git/MERGE_HEAD.lock 2>/dev/null
+find .git/objects -name 'tmp_obj_*' -delete 2>/dev/null
 MSG="업데이트: $(date +'%Y-%m-%d %H:%M')"
 git add .
 git diff --staged --quiet && echo "변경사항 없음" && exit 0
