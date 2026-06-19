@@ -59,13 +59,11 @@ def get_naver_info(apt_name, gu_name):
                     try:
                         mapx_val = int(mapx)
                         mapy_val = int(mapy)
-                        # 스케일 자동 감지 (한국 좌표: 위도 33-40, 경도 124-133)
-                        for factor in [1, 10, 100, 1000, 10000, 100000]:
-                            lat_t = mapy_val / factor
-                            lng_t = mapx_val / factor
-                            if 33 <= lat_t <= 40 and 124 <= lng_t <= 133:
-                                result["네이버좌표"] = f"{round(lat_t, 6)},{round(lng_t, 6)}"
-                                break
+                        # Naver mapx/mapy는 WGS84 좌표 × 10,000,000
+                        lat_t = round(mapy_val / 10000000, 6)
+                        lng_t = round(mapx_val / 10000000, 6)
+                        if 33 <= lat_t <= 40 and 124 <= lng_t <= 133:
+                            result["네이버좌표"] = f"{lat_t},{lng_t}"
                     except (ValueError, TypeError):
                         pass
 
