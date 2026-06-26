@@ -128,12 +128,51 @@
     .gd1{animation:gpulse 2.5s ease-in-out infinite;}
     .gd2{animation:gpulse 2.0s ease-in-out infinite .6s;}
     .gd3{animation:gpulse 3.0s ease-in-out infinite 1.2s;}
+
+    /* ── 비밀번호 화면 ── */
+    #lock{position:fixed;inset:0;background:#0c1828;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:28px;}
+    #lock-title{font-family:'Nanum Myeongjo',serif;font-size:22px;font-weight:700;color:#c8d8f0;letter-spacing:3px;}
+    #lock-sub{font-size:12px;color:#4a7aaa;letter-spacing:1.5px;}
+    .pin-row{display:flex;gap:14px;}
+    .pin-box{width:52px;height:62px;border:2px solid #1e4a80;border-radius:10px;background:#0a1420;color:#00eec0;font-size:28px;text-align:center;outline:none;caret-color:transparent;transition:border-color .2s;}
+    .pin-box:focus{border-color:#00ddb0;box-shadow:0 0 10px rgba(0,200,160,.3);}
+    .pin-box.err{border-color:#e53935;animation:pinshake .4s ease;}
+    #pin-msg{font-size:12px;color:#e53935;min-height:16px;letter-spacing:1px;}
+    @keyframes pinshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
   </style>
 </head>
 <body>
 
+<!-- 비밀번호 화면 -->
+<div id="lock">
+  <div class="logo-float">
+    <svg width="72" height="72" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="70" cy="70" r="66" fill="#0c1828" stroke="#1e4a80" stroke-width="1.5"/>
+      <circle cx="70" cy="70" r="56" fill="none" stroke="#1e4a80" stroke-width=".8" opacity=".6"/>
+      <circle cx="70" cy="70" r="42" fill="none" stroke="#1e4a80" stroke-width=".8" opacity=".4"/>
+      <polygon points="80,50 104,76 56,76" fill="#1e3a6a"/>
+      <rect x="62" y="42" width="6" height="12" rx="1" fill="#162d55"/>
+      <rect x="58" y="76" width="44" height="28" fill="#162d55"/>
+      <rect x="63" y="81" width="11" height="10" rx="1" fill="#4080c8"/>
+      <rect x="82" y="81" width="11" height="10" rx="1" fill="#4080c8"/>
+      <rect x="72" y="90" width="10" height="14" rx="1" fill="#0a1420"/>
+      <circle cx="109" cy="40" r="5" fill="#00ddb0" opacity=".7"/>
+      <circle cx="109" cy="40" r="2.8" fill="#00eec0"/>
+    </svg>
+  </div>
+  <div id="lock-title">아파트 왓</div>
+  <div id="lock-sub">비밀번호 4자리를 입력하세요</div>
+  <div class="pin-row">
+    <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off">
+    <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off">
+    <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off">
+    <input class="pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off">
+  </div>
+  <div id="pin-msg"></div>
+</div>
+
 <!-- 스플래시 화면 -->
-<div id="splash">
+<div id="splash" style="display:none">
   <div id="splash-inner">
   <div class="logo-float">
     <svg width="168" height="168" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
@@ -536,23 +575,15 @@ function openModal(t){
   html+=`<h4 style="margin:12px 0 8px;font-size:12px;color:#5f6368">최근 거래 이력</h4><table><thead><tr><th>거래일</th><th>면적</th><th>층</th><th>금액</th></tr></thead><tbody>`;
   hist.forEach(h=>{html+=`<tr><td>${h.거래일}</td><td>${h.전용면적}㎡</td><td>${h.층}층</td><td class="pc">${h.거래금액_억}억</td></tr>`;});
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  let naverUrl;
-  if(t.네이버단지번호){
-    // 구버전 모바일 URL(/complex/main?complexNo=) + PC URL 분기
-    naverUrl=isMobile
-      ?`https://m.land.naver.com/complex/main?complexNo=${t.네이버단지번호}`
-      :`https://new.land.naver.com/complexes/${t.네이버단지번호}?a=APT:ABYG:JGC:PRE&e=SELL`;
-  } else if(t.네이버좌표){
-    const[lat,lng]=t.네이버좌표.split(',');
-    naverUrl=isMobile
-      ?`https://m.land.naver.com/complex/main?cortarNo=&ms=${lat},${lng},17&a=APT&e=SELL`
-      :`https://new.land.naver.com/complexes?ms=${lat},${lng},17&a=APT&b=A1&e=SELL&q=${encodeURIComponent(t.단지명)}`;
+  let hgnnUrl;
+  if(t.호갱노노ID){
+    hgnnUrl=`https://hogangnono.com/apt/${t.호갱노노ID}`;
   } else {
-    naverUrl=`https://new.land.naver.com/complexes?q=${encodeURIComponent(t.단지명+' '+t.구)}`;
+    hgnnUrl=`https://hogangnono.com/search?q=${encodeURIComponent(t.단지명+' '+t.법정동)}`;
   }
   const linkTarget=isMobile?'_self':'_blank';
   html+=`</tbody></table>
-  <a href="${naverUrl}" target="${linkTarget}" class="naver-btn" style="display:block;text-align:center;margin-top:12px;">📍 N-pay 부동산에서 보기</a>`;
+  <a href="${hgnnUrl}" target="${linkTarget}" class="naver-btn" style="display:block;text-align:center;margin-top:12px;">🏠 호갱노노에서 보기</a>`;
   document.getElementById('mo-body').innerHTML=html;
   document.getElementById('detail-mo').classList.add('open');
 }
@@ -584,25 +615,54 @@ document.getElementById('btn-reset').addEventListener('click',()=>{
 
 init().catch(console.error);
 
-// 스플래시: 모바일에서 viewport=1200으로 축소된 콘텐츠를 화면 크기에 맞게 역보정
+// ── 비밀번호 → 스플래시 ──
 (function(){
-  var s  = document.getElementById('splash');
-  var si = document.getElementById('splash-inner');
-  if(!s) return;
-  // 실제 화면 높이로 splash 배경 꽉 채우기
-  s.style.height = window.innerHeight + 'px';
-  // 물리 화면폭(screen.width)과 레이아웃 뷰포트(innerWidth=1200)의 비율로 콘텐츠 확대
-  if(si){
-    var sc = window.innerWidth / (screen.width || window.innerWidth);
-    if(sc > 1.2) si.style.transform = 'scale(' + sc + ')';
+  const CORRECT = '1234';
+  const lock  = document.getElementById('lock');
+  const boxes = document.querySelectorAll('.pin-box');
+  const msg   = document.getElementById('pin-msg');
+
+  function showSplash(){
+    lock.style.display = 'none';
+    const s  = document.getElementById('splash');
+    const si = document.getElementById('splash-inner');
+    s.style.display = 'flex';
+    s.style.height  = window.innerHeight + 'px';
+    if(si){
+      var sc = window.innerWidth / (screen.width || window.innerWidth);
+      if(sc > 1.2) si.style.transform = 'scale(' + sc + ')';
+    }
+    setTimeout(()=>{ s.classList.add('fade'); setTimeout(()=>s.remove(),700); }, 3000);
+  }
+
+  // 같은 세션에서 이미 인증 완료 → 바로 스플래시
+  if(sessionStorage.getItem('apt_auth')==='1'){ showSplash(); return; }
+
+  // PIN 입력 처리
+  boxes.forEach((box, i)=>{
+    box.addEventListener('input', function(){
+      this.value = this.value.replace(/\D/g,'').slice(-1);
+      if(this.value && i < boxes.length-1) boxes[i+1].focus();
+      const pin = [...boxes].map(b=>b.value).join('');
+      if(pin.length===4) checkPin(pin);
+    });
+    box.addEventListener('keydown', function(e){
+      if(e.key==='Backspace'&&!this.value&&i>0) boxes[i-1].focus();
+    });
+  });
+  boxes[0].focus();
+
+  function checkPin(pin){
+    if(pin===CORRECT){
+      sessionStorage.setItem('apt_auth','1');
+      showSplash();
+    } else {
+      msg.textContent='비밀번호가 틀렸습니다';
+      boxes.forEach(b=>{ b.value=''; b.classList.add('err'); });
+      setTimeout(()=>{ boxes.forEach(b=>b.classList.remove('err')); msg.textContent=''; boxes[0].focus(); }, 700);
+    }
   }
 }());
-// 스플래시 3초 후 제거
-setTimeout(()=>{
-  const s=document.getElementById('splash');
-  s.classList.add('fade');
-  setTimeout(()=>s.remove(),700);
-},3000);
 </script>
 </body>
 </html>

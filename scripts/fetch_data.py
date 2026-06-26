@@ -21,6 +21,7 @@ NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "0QrM73nSAb9WQg_rysfa")
 NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "Rao5GYcu0i")
 
 _naver_cache = {}
+_hgnn_cache = {}
 
 
 def get_naver_info(apt_name, gu_name):
@@ -111,6 +112,35 @@ def _get_land_complex_no(apt_name, gu_name):
     except Exception:
         pass
     return ""
+
+def get_hogangnono_id(apt_name, dong_name):
+    """호갱노노 검색 API로 단지 코드 조회 → /apt/{code} 직접 링크용"""
+    key = f"{apt_name}_{dong_name}"
+    if key in _hgnn_cache:
+        return _hgnn_cache[key]
+    code = ""
+    try:
+        resp = requests.get(
+            "https://hogangnono.com/api/apts/search",
+            params={"q": f"{apt_name} {dong_name}", "limit": 5},
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            items = data.get("data", data.get("results", data.get("apts", [])))
+            for item in items:
+                name = item.get("name", item.get("aptName", ""))
+                uid  = item.get("uid",  item.get("code",  item.get("id", "")))
+                if uid and apt_name[:4] in name:
+                    code = str(uid)
+                    break
+        time.sleep(0.05)
+    except Exception:
+        pass
+    _hgnn_cache[key] = code
+    return code
+
 
 # 서울 25개 구 법정동코드
 SEOUL_DISTRICTS = {
@@ -275,6 +305,23 @@ def main():
         t["네이버ID"] = info.get("네이버ID", "")
         t["네이버좌표"] = info.get("네이버좌표", "")
         t["네이버단지번호"] = info.get("네이버단지번호", "")
+
+    # ── 호갱노노 단지 코드 조회 ──
+    print("\n[호갱노노] 단지 코드 조회 중...")
+    hgnn_keys = {}
+    for t in all_transactions:
+        k = (t["단지명"], t["법정동"])
+        if k not in hgnn_keys:
+            hgnn_keys[k] = None
+
+    total_h = len(hgnn_keys)
+    for i, (apt_name, dong_name) in enumerate(hgnn_keys.keys(), 1):
+        hgnn_keys[(apt_name, dong_name)] = get_hogangnono_id(apt_name, dong_name)
+        if i % 50 == 0 or i == total_h:
+            print(f"  {i}/{total_h} 처리중...", flush=True)
+
+    for t in all_transactions:
+        t["호갱노노ID"] = hgnn_keys.get((t["단지명"], t["법정동"]), "")
 
     # 거래일 기준 내림차순 정렬
     all_transactions.sort(key=lambda x: x.get("거래일", ""), reverse=True)
