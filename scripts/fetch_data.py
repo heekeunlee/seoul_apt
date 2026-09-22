@@ -9,10 +9,12 @@
 import os
 import json
 import time
+import re
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from difflib import SequenceMatcher
 
 API_KEY = os.environ.get("MOLIT_API_KEY", "FNRUoAx54GnO18NkzyJFWX1fLrmw4CmB5dsVtAkF6NFV6jbuJUqEhcG9VzCO0WkGHkerkCKrObHQGSBxEXHcpQ==")
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
@@ -113,33 +115,66 @@ def _get_land_complex_no(apt_name, gu_name):
         pass
     return ""
 
+def _norm_name(s):
+    """단지명 비교용 정규화 (공백·괄호·'아파트' 제거)"""
+    s = re.sub(r"\(.*?\)", "", s)
+    return re.sub(r"[\s·\-]|아파트", "", s)
+
+
 def get_hogangnono_id(apt_name, dong_name):
-    """호갱노노 검색 API로 단지 코드 조회 → /apt/{code} 직접 링크용"""
+    """호갱노노 검색 페이지(SSR HTML)에서 단지 코드 조회 → /apt/{code} 직접 링크용"""
     key = f"{apt_name}_{dong_name}"
     if key in _hgnn_cache:
         return _hgnn_cache[key]
     code = ""
     try:
         resp = requests.get(
-            "https://hogangnono.com/api/apts/search",
-            params={"q": f"{apt_name} {dong_name}", "limit": 5},
+            "https://hogangnono.com/search",
+            params={"q": f"{dong_name} {apt_name}"},
             headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
-            timeout=5,
+            timeout=10,
         )
         if resp.status_code == 200:
-            data = resp.json()
-            items = data.get("data", data.get("results", data.get("apts", [])))
-            for item in items:
-                name = item.get("name", item.get("aptName", ""))
-                uid  = item.get("uid",  item.get("code",  item.get("id", "")))
-                if uid and apt_name[:4] in name:
-                    code = str(uid)
+            target = _norm_name(apt_name)
+            best, best_score = "", 0.0
+            # <a href="/apt/1T2af"><div class="label-container"><span class="label">...대치동 은마...</span>
+            for m in re.finditer(r'href="/apt/([0-9A-Za-z]+)"><div class="label-container"><span class="label">(.*?)</span></div>', resp.text):
+                label = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+                if not label.startswith(dong_name):
+                    continue
+                name = _norm_name(label[len(dong_name):])
+                if not name:
+                    continue
+                if name == target:
+                    best = m.group(1)
                     break
-        time.sleep(0.05)
+                score = SequenceMatcher(None, name, target).ratio()
+                if name in target or target in name:
+                    score = max(score, 0.8)
+                if score > best_score:
+                    best, best_score = m.group(1), score
+            if best and (best_score >= 0.6 or best_score == 0.0):
+                code = best
+        time.sleep(0.2)
     except Exception:
         pass
     _hgnn_cache[key] = code
     return code
+
+
+def load_previous_cache(out_path):
+    """이전 transactions.json의 네이버/호갱노노 조회 결과를 캐시로 재사용"""
+    try:
+        with open(out_path, encoding="utf-8") as f:
+            prev = json.load(f)
+    except Exception:
+        return
+    for t in prev.get("transactions", []):
+        nk = f"{t['단지명']}_{t['구']}"
+        if nk not in _naver_cache:
+            _naver_cache[nk] = {k: t.get(k, "") for k in ("네이버ID", "네이버좌표", "네이버단지번호")}
+        if t.get("호갱노노ID"):
+            _hgnn_cache[f"{t['단지명']}_{t['법정동']}"] = t["호갱노노ID"]
 
 
 # 서울 25개 구 법정동코드
@@ -176,6 +211,7 @@ HANGANG_DISTRICTS = {"마포구", "용산구", "영등포구", "성동구", "광
 
 MAX_PRICE = 200000  # 20억 (만원 단위)
 MIN_AREA = 84.0     # 84㎡
+MIN_EXPECTED = 5000 # 이보다 적게 수집되면 실패로 간주
 
 # 아파트 외 주거형태 제외 키워드 (오피스텔, 주상복합 등)
 EXCLUDE_KEYWORDS = ["오피스텔", "오피 스텔", "주상복합", "생활숙박", "레지던스", "도시형"]
@@ -269,6 +305,8 @@ def fetch_transactions(lawd_cd, deal_ymd):
 
 def main():
     print("=== 국토부 아파트 매매 실거래가 수집 시작 ===")
+    out_path = os.path.join(os.path.dirname(__file__), "..", "data", "transactions.json")
+    load_previous_cache(out_path)
     yearmonths = get_yearmonths(12)
     all_transactions = []
 
@@ -358,7 +396,10 @@ def main():
         "transactions": all_transactions,
     }
 
-    out_path = os.path.join(os.path.dirname(__file__), "..", "data", "transactions.json")
+    # 수집 실패(API 차단·키 오류 등)로 데이터가 비정상적으로 적으면 기존 파일 보존
+    if len(all_transactions) < MIN_EXPECTED:
+        raise SystemExit(f"수집 건수 {len(all_transactions)}건 < {MIN_EXPECTED}건: 기존 데이터를 유지하고 종료")
+
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)

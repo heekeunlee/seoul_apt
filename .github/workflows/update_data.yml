@@ -6,9 +6,13 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:  # 수동 실행 버튼
 
+permissions:
+  contents: write  # 데이터 커밋 push 권한 (없으면 403)
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     steps:
       - name: 저장소 체크아웃
