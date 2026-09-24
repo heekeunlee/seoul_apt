@@ -220,7 +220,7 @@
 
 <header>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <h1>🌉 아파트 왓 <span>서울 아파트 실거래가 · 25억 이하 · 84㎡ 이상</span></h1>
+    <h1>🌉 아파트 왓 <span>서울 아파트 실거래가 · 20억 이하 · 84㎡ 이상</span></h1>
   </div>
   <div class="hdr-right">
     <span id="sample-badge" class="badge" style="display:none">샘플 데이터</span>
@@ -247,7 +247,7 @@
     <!-- 분석 기준 인라인 텍스트 -->
     <div style="padding:10px 14px;font-size:10px;color:#9e9e9e;line-height:1.7;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);">
       <strong style="color:#bdbdbd;font-size:10px;">📌 데이터 출처</strong> 국토교통부 아파트 매매 실거래가 API (공공데이터포털) — 실제 신고 계약만 포함, 추정·호가 제외<br>
-      <strong style="color:#bdbdbd;font-size:10px;">🔍 필터</strong> 서울 25개 구 / 거래금액 25억 이하 / 전용면적 84㎡ 이상 / 최근 12개월<br>
+      <strong style="color:#bdbdbd;font-size:10px;">🔍 필터</strong> 서울 25개 구 / 거래금액 20억 이하 / 전용면적 84㎡ 이상 / 최근 12개월<br>
       <strong style="color:#bdbdbd;font-size:10px;">🏞️ 한강 인근</strong> 마포·용산·영등포·성동·광진·동작·강동·강남·서초·송파구<br>
       <strong style="color:#bdbdbd;font-size:10px;">🔄 업데이트</strong> GitHub Actions 매일 오전 9시(KST) 자동 갱신 — 국토부 신고 의무기한(30일)으로 1~4주 지연 가능<br>
       <span style="color:#c0c0c0;">⚠️ 개인 투자 참고용이며 실제 매수 결정 전 전문가 확인을 권장합니다.</span>
@@ -268,8 +268,8 @@
       <h2>🔍 필터</h2>
       <div class="fg-grid">
         <div class="fg"><label>구 선택</label><select id="f-gu"><option value="">전체 구</option></select></div>
-        <div class="fg"><label>최대 거래가</label><div class="rr"><input type="range" id="s-max-p" min="10" max="25" step="1" value="25"><span class="rv" id="v-max">25억</span></div></div>
-        <div class="fg"><label>최소 거래가</label><div class="rr"><input type="range" id="s-min-p" min="5" max="25" step="1" value="10"><span class="rv" id="v-min">10억</span></div></div>
+        <div class="fg"><label>최대 거래가</label><div class="rr"><input type="range" id="s-max-p" min="10" max="20" step="1" value="20"><span class="rv" id="v-max">20억</span></div></div>
+        <div class="fg"><label>최소 거래가</label><div class="rr"><input type="range" id="s-min-p" min="5" max="20" step="1" value="10"><span class="rv" id="v-min">10억</span></div></div>
         <div class="fg"><label>최소 전용면적</label><div class="rr"><input type="range" id="s-area" min="84" max="200" step="1" value="84"><span class="rv" id="v-area">84㎡~</span></div></div>
         <div class="fg"><label>건축연도 이후</label><select id="f-year"><option value="">전체</option><option value="2010">2010년~</option><option value="2015">2015년~</option><option value="2018">2018년~</option><option value="2020">2020년~</option></select></div>
         <div class="fg"><label>&nbsp;</label><div class="tog-row"><label class="tog"><input type="checkbox" id="t-hangang"><span class="sl"></span></label><span style="font-size:12px;font-weight:600">한강 인근만</span></div></div>
@@ -602,7 +602,7 @@ document.querySelectorAll('th[data-k]').forEach(th=>{
 // ── 초기화 버튼 ──
 document.getElementById('btn-reset').addEventListener('click',()=>{
   ['f-gu','f-year'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('s-max-p').value=25; document.getElementById('v-max').textContent='25억';
+  document.getElementById('s-max-p').value=20; document.getElementById('v-max').textContent='20억';
   document.getElementById('s-min-p').value=10; document.getElementById('v-min').textContent='10억';
   document.getElementById('s-area').value=84; document.getElementById('v-area').textContent='84㎡~';
   document.getElementById('t-hangang').checked=false;

@@ -2,7 +2,7 @@
 국토교통부 아파트 매매 실거래가 수집 스크립트
 - 서울 25개 구 전체
 - 최근 12개월
-- 25억 이하, 전용면적 84㎡ 이상 필터
+- 20억 이하, 전용면적 84㎡ 이상 필터
 - Naver Local Search API로 좌표 조회 → 정확한 위치 링크 생성
 """
 
@@ -16,11 +16,35 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from difflib import SequenceMatcher
 
-API_KEY = os.environ.get("MOLIT_API_KEY", "FNRUoAx54GnO18NkzyJFWX1fLrmw4CmB5dsVtAkF6NFV6jbuJUqEhcG9VzCO0WkGHkerkCKrObHQGSBxEXHcpQ==")
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
 
-NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "0QrM73nSAb9WQg_rysfa")
-NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "Rao5GYcu0i")
+
+def _load_dotenv():
+    """저장소 루트의 .env에서 키 읽기 (로컬 실행용, .env는 git 제외 대상)"""
+    path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+
+
+def _require_env(name):
+    """키는 환경변수(로컬 .env / GitHub Secrets)에서만 읽는다 - 코드에 넣지 않음"""
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise SystemExit(f"환경변수 {name}가 없습니다. .env 또는 GitHub Secrets에 설정하세요.")
+    return value
+
+
+_load_dotenv()
+API_KEY = _require_env("MOLIT_API_KEY")
+NAVER_CLIENT_ID = _require_env("NAVER_CLIENT_ID")
+NAVER_CLIENT_SECRET = _require_env("NAVER_CLIENT_SECRET")
 
 _naver_cache = {}
 _hgnn_cache = {}
